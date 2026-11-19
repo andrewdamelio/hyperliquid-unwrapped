@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hyper Unwrapped — your Hyperliquid trading, unwrapped</title>
+<meta name="description" content="Paste a Hyperliquid address, get shareable PnL cards: best trade, worst trade, cursed assets, biggest miss and more.">
+<meta name="theme-color" content="#07070a">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Grotesk:wght@500;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#07070a;--ink:#f3f1ea;--dim:#9a9aa6;--line:#24242e;--acc:#c6ff3d}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:'Space Grotesk',system-ui,sans-serif;-webkit-font-smoothing:antialiased;min-height:100%}
+#fx{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none}
+.wrap{position:relative;z-index:1;max-width:520px;margin:0 auto;padding:22px 16px 40px}
+header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.logo{font-family:Anton,Impact,sans-serif;font-size:22px;letter-spacing:.02em}
+.logo i{font-style:normal;color:var(--acc)}
+.tag{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--dim)}
+/* landing */
+#landing h1{font-family:Anton,Impact,sans-serif;font-weight:400;font-size:clamp(54px,15vw,84px);line-height:.92;margin:34px 0 14px;letter-spacing:.01em;text-transform:uppercase}
+#landing h1 span{color:var(--acc)}
+#landing h1 em{font-style:normal;color:#ff4d5e}
+#landing p{color:var(--dim);font-size:16px;line-height:1.5;margin:0 0 22px}
+.inp{display:flex;gap:8px}
+input{flex:1;min-width:0;font-family:'JetBrains Mono',monospace;font-size:14px;color:var(--ink);background:#101016;border:1.5px solid var(--line);border-radius:12px;padding:14px;outline:none}
+input:focus{border-color:var(--acc)}
+input.bad{border-color:#ff4d5e}
+.go{font-family:Anton,Impact,sans-serif;font-size:20px;letter-spacing:.04em;background:var(--acc);color:#07070a;border:0;border-radius:12px;padding:0 20px;cursor:pointer}
+.go:disabled{opacity:.5}
+.demos{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.chip{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ink);background:#101016;border:1px solid var(--line);border-radius:99px;padding:8px 12px;cursor:pointer}
+.chip:hover{border-color:var(--dim)}
+.status{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--dim);margin-top:18px;min-height:20px}
+.status.err{color:#ff6b78}
+.bar{height:4px;background:var(--line);border-radius:99px;overflow:hidden;margin-top:10px;display:none}
+.bar i{display:block;height:100%;width:0;background:var(--acc);transition:width .3s}
+.fine{font-size:12px;color:#5d5d68;margin-top:28px;line-height:1.5}
+/* story viewer */
+#story{display:none}
+.prog{display:flex;gap:4px;margin:6px 0 10px}
+.prog i{flex:1;height:3px;border-radius:99px;background:#2a2a34;overflow:hidden;position:relative;cursor:pointer}
+.prog i.done::after,.prog i.on::after{content:"";position:absolute;inset:0;background:var(--ink)}
+.stage{position:relative;border-radius:18px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.6);aspect-ratio:4/5;background:#111}
+.stage img{display:block;width:100%;height:100%;user-select:none;-webkit-user-select:none}
+.tap{position:absolute;top:0;bottom:0;width:35%;cursor:pointer}
+.tap.l{left:0}.tap.r{right:0}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.act{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:15px;color:var(--ink);background:#14141b;border:1px solid var(--line);border-radius:12px;padding:13px;cursor:pointer}
+.act.primary{background:var(--acc);color:#07070a;border:0}
+.hint{font-size:12px;color:#6b6b77;text-align:center;margin-top:10px}
+.nav{display:flex;justify-content:space-between;align-items:center;margin-top:10px}
+.nav button{background:none;border:0;color:var(--dim);font-family:'JetBrains Mono',monospace;font-size:13px;cursor:pointer;padding:6px}
+.toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,90px);background:var(--ink);color:#07070a;font-weight:700;padding:10px 16px;border-radius:10px;transition:transform .2s;z-index:9;opacity:0}
+.toast.on{transform:translate(-50%,0);opacity:1}
+</style>
+</head>
+<body>
+<canvas id="fx"></canvas>
+<div class="wrap">
+  <header><div class="logo">HYPER<i>UNWRAPPED</i></div><div class="tag">not financial advice</div></header>
+
+  <section id="landing">
+    <h1>Your perps,<br><span>unwrapped</span>.<br><em>No refunds.</em></h1>
+    <p>Paste any Hyperliquid address. Get shareable cards: all-time PnL, best and worst trades, cursed assets, biggest miss, and what kind of degen you really are.</p>
+    <form class="inp" id="form">
+      <input id="addr" placeholder="0x… Hyperliquid address" autocomplete="off" spellcheck="false" inputmode="text">
+      <button class="go" id="goBtn">UNWRAP</button>
+    </form>
+    <div class="demos">
+      <button class="chip" data-demo="god">demo: generational 🚀</button>
+      <button class="chip" data-demo="party">demo: cooking 🎉</button>
+      <button class="chip" data-demo="cope">demo: coping 🫠</button>
+      <button class="chip" data-demo="rekt">demo: rekt 💀</button>
+    </div>
+    <div class="status" id="status"></div>
+    <div class="bar" id="bar"><i></i></div>
+    <p class="fine">Reads public data from Hyperliquid's Info API, right in your browser. Nothing is stored or sent anywhere else. Hyperliquid only serves an account's most recent 10,000 fills, so very active accounts are recapped from those. Independent fan tool, not affiliated with Hyperliquid.</p>
+  </section>
+
+  <section id="story">
+    <div class="prog" id="prog"></div>
+    <div class="stage" id="stage"><img id="cardImg" alt="unwrapped card"><div class="tap l" id="tapL"></div><div class="tap r" id="tapR"></div></div>
+    <div class="nav"><button id="prev">← prev</button><span class="tag" id="count"></span><button id="next">next →</button></div>
+    <div class="actions">
+      <button class="act primary" id="share">Share card</button>
+      <button class="act" id="save">Save card</button>
+      <button class="act" id="saveAll">Save all</button>
+      <button class="act" id="again">New address</button>
+    </div>
+    <div class="hint">Tip: long-press a card to save it to your photos.</div>
+  </section>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+(() => {
+"use strict";
+const $ = (s) => document.querySelector(s);
+const API = "https://api.hyperliquid.xyz/info";
+const W = 1080, H = 1350;
+const DAY = 864e5;
+
+// ---------- utils ----------
+function toast(m) { const t = $("#toast"); t.textContent = m; t.classList.add("on"); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove("on"), 1600); }
+function hashStr(s) { let h = 2166136261; for (const c of s) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; }
+function rng(seed) { let a = seed >>> 0; return () => { a |= 0; a = (a + 0x6d2b79f5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+const pick = (r, arr) => arr[Math.floor(r() * arr.length)];
+const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+function money(n, signed = true) {
+  const s = n < 0 ? "-" : signed && n > 0 ? "+" : "";
+  const a = Math.abs(n);
+  let v;
+  if (a >= 1e9) v = (a / 1e9).toFixed(2) + "B";
+  else if (a >= 1e6) v = (a / 1e6).toFixed(2) + "M";
+  else if (a >= 1e5) v = (a / 1e3).toFixed(1) + "K";
+  else if (a >= 1000) v = Math.round(a).toLocaleString("en-US");
+  else v = a.toFixed(2);
+  return s + "$" + v;
+}
+const pct = (x) => (x > 0 ? "+" : "") + (Math.abs(x) >= 10 ? Math.round(x * 100).toLocaleString("en-US") : (x * 100).toFixed(1)) + "%";
+function px(p) { p = Number(p); if (!isFinite(p)) return "—"; if (p >= 1000) return "$" + Math.round(p).toLocaleString("en-US"); return "$" + Number(p.toPrecision(5)).toString(); }
+function dur(ms) {
+  const m = ms / 6e4;
+  if (m < 1) return Math.max(1, Math.round(ms / 1000)) + "s";
+  if (m < 60) return Math.round(m) + "m";
+  const h = m / 60; if (h < 48) return Math.floor(h) + "h " + Math.round(m % 60) + "m";
+  const d = h / 24; return Math.floor(d) + "d " + Math.round(h % 24) + "h";
+}
+const dateStr = (t) => new Date(t).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+const monthStr = (t) => new Date(t).toLocaleDateString("en-US", { month: "short", year: "numeric" });
+const short = (a) => a.slice(0, 6) + "…" + a.slice(-4);
+
+// ---------- data ----------
+async function realInfo(body) {
+  const r = await fetch(API, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  if (r.status === 429) { await new Promise((ok) => setTimeout(ok, 1200)); return realInfo(body); }
+  if (!r.ok) throw new Error("Hyperliquid API returned " + r.status);
+  return r.json();
+}
+
+async function fetchAll(user, info, progress) {
+  progress(0.05, "Pulling your fills…");
+  const fills = [];
+  let start = 0;
+  for (let i = 0; i < 6; i++) {
+    const page = await info({ type: "userFillsByTime", user, startTime: start, aggregateByTime: true });
+    if (!Array.isArray(page) || !page.length) break;
+    fills.push(...page);
+    progress(0.08 + i * 0.08, `Pulling your fills… ${fills.length.toLocaleString()}`);
+    if (page.length < 2000) break;
+    start = Math.max(...page.map((f) => f.time)) + 1;
+  }
+  const seen = new Set();
+  const uniq = fills.filter((f) => { const k = f.tid ?? f.hash + f.oid + f.time + f.px; if (seen.has(k)) return false; seen.add(k); return true; }).sort((a, b) => a.time - b.time);
+
+  progress(0.6, "Consulting the funding gods…");
+  const funding = [];
+  let fstart = uniq.length ? uniq[0].time : 0;
+  for (let i = 0; i < 20; i++) {
+    const page = await info({ type: "userFunding", user, startTime: fstart });
+    if (!Array.isArray(page) || !page.length) break;
+    funding.push(...page);
+    if (page.length < 500) break;
+    fstart = Math.max(...page.map((x) => x.time)) + 1;
+  }
+
+  progress(0.72, "Counting the damage…");
+  const [portfolio, state] = await Promise.all([
+    info({ type: "portfolio", user }).catch(() => null),
+    info({ type: "clearinghouseState", user }).catch(() => null),
+  ]);
+  let spotNames = {};
+  if (uniq.some((f) => String(f.coin).startsWith("@"))) {
+    try {
+      const sm = await info({ type: "spotMeta" });
+      for (const u of sm.universe) { const b = sm.tokens[u.tokens[0]]; spotNames[u.name] = b ? b.name : u.name; }
+    } catch {}
+  }
+  return { user, fills: uniq, funding, portfolio, state, spotNames, capped: fills.length >= 10000 };
+}
+
+// ---------- analysis ----------
+function coinName(c, spotNames) {
+  c = String(c);
+  if (spotNames[c]) return spotNames[c];
+  if (c.includes(":")) return c.split(":")[1];
+  if (c.includes("/")) return c.split("/")[0];
+  return c;
+}
+
+function analyze(d) {
+  const user = d.user.toLowerCase();
+  const name = (c) => coinName(c, d.spotNames);
+  const trades = [], open = {};
+  let volume = 0, fees = 0, builderFees = 0, liqCount = 0, liqLoss = 0;
+  const byCoin = {}, hours = new Array(24).fill(0), coinVol = {};
+  for (const f of d.fills) {
+    const sz = Number(f.sz), p = Number(f.px), notional = sz * p;
+    const signed = f.side === "B" ? sz : -sz;
+    const start = Number(f.startPosition || 0), after = start + signed;
+    const fee = f.feeToken && f.feeToken !== "USDC" ? Number(f.fee) * p : Number(f.fee || 0);
+    const cp = Number(f.closedPnl || 0);
+    volume += notional; fees += fee; builderFees += Number(f.builderFee || 0);
+    hours[new Date(f.time).getUTCHours()]++;
+    coinVol[name(f.coin)] = (coinVol[name(f.coin)] || 0) + notional;
+    const c = (byCoin[name(f.coin)] ||= { pnl: 0, vol: 0, trades: 0 });
+    c.pnl += cp - fee; c.vol += notional;
+    if (f.liquidation && String(f.liquidation.liquidatedUser || "").toLowerCase() === user) { liqCount++; liqLoss += cp; }
+    // reconstruct position lifecycles
+    let t = open[f.coin];
+    if (!t && Math.abs(start) > 1e-12) t = open[f.coin] = { coin: f.coin, name: name(f.coin), side: start > 0 ? 1 : -1, openTime: f.time, pnl: 0, inSz: Math.abs(start), inNotional: Math.abs(start) * p, outSz: 0, outNotional: 0, maxSz: Math.abs(start), partial: true, liq: false };
+    const reducing = t && Math.sign(signed) !== t.side;
+    if (!t) t = open[f.coin] = { coin: f.coin, name: name(f.coin), side: Math.sign(signed), openTime: f.time, pnl: 0, inSz: 0, inNotional: 0, outSz: 0, outNotional: 0, maxSz: 0, liq: false };
+    t.pnl += cp - fee;
+    if (f.liquidation && String(f.liquidation.liquidatedUser || "").toLowerCase() === user) t.liq = true;
+    if (reducing) {
+      const closeSz = Math.min(sz, Math.abs(start));
+      t.outSz += closeSz; t.outNotional += closeSz * p;
+      if (Math.abs(after) < 1e-12 || Math.sign(after) !== Math.sign(start)) {
+        t.closeTime = f.time; t.entry = t.inNotional / (t.inSz || 1); t.exit = t.outNotional / (t.outSz || 1);
+        trades.push(t); byCoin[t.name].trades++; delete open[f.coin];
+        if (Math.abs(after) > 1e-12) { // flipped
+          const rem = Math.abs(after);
+          open[f.coin] = { coin: f.coin, name: t.name, side: Math.sign(after), openTime: f.time, pnl: 0, inSz: rem, inNotional: rem * p, outSz: 0, outNotional: 0, maxSz: rem, liq: false };
+        }
+      }
+    } else {
+      t.inSz += sz; t.inNotional += notional; t.maxSz = Math.max(t.maxSz, Math.abs(after));
+    }
+  }
+  const fundingNet = d.funding.reduce((s, x) => s + Number(x.delta?.usdc || 0), 0);
+  const fundingByCoin = {};
+  for (const x of d.funding) { const n = name(x.delta?.coin); fundingByCoin[n] = (fundingByCoin[n] || 0) + Number(x.delta?.usdc || 0); }
+  for (const [n, v] of Object.entries(fundingByCoin)) if (byCoin[n]) byCoin[n].pnl += v;
+
+  // headline pnl + chart from portfolio (includes funding and fees)
+  let pnl = null, series = [], peak = 0;
+  const all = Array.isArray(d.portfolio) ? d.portfolio.find((x) => x[0] === "allTime") : null;
+  if (all && all[1]?.pnlHistory?.length) {
+    series = all[1].pnlHistory.map(([t, v]) => [t, Number(v)]);
+    pnl = series[series.length - 1][1];
+    // capital basis = most ever deposited (account value minus cumulative pnl at the same moment)
+    const pnlAt = new Map(series.map(([t, v]) => [t, v]));
+    for (const [t, v] of all[1].accountValueHistory || []) if (pnlAt.has(t)) peak = Math.max(peak, Number(v) - pnlAt.get(t));
+  }
+  const closedSum = trades.reduce((s, t) => s + t.pnl, 0);
+  if (pnl === null) {
+    pnl = closedSum + fundingNet;
+    let run = 0; series = trades.map((t) => [t.closeTime, (run += t.pnl)]);
+  }
+  const roi = peak > 0 ? Math.max(-1, pnl / peak) : null;
+
+  const wins = trades.filter((t) => t.pnl > 0).length;
+  const winRate = trades.length ? wins / trades.length : 0;
+  let streak = 0, best = 0; for (const t of trades) { streak = t.pnl > 0 ? streak + 1 : 0; best = Math.max(best, streak); }
+  const holds = trades.map((t) => t.closeTime - t.openTime).sort((a, b) => a - b);
+  const medianHold = holds.length ? holds[Math.floor(holds.length / 2)] : 0;
+  const sortedTrades = [...trades].sort((a, b) => b.pnl - a.pnl);
+  const coins = Object.entries(byCoin).map(([n, v]) => ({ name: n, ...v }));
+  const bestCoins = coins.filter((c) => c.pnl > 0).sort((a, b) => b.pnl - a.pnl).slice(0, 3);
+  const cursed = coins.filter((c) => c.pnl < 0).sort((a, b) => a.pnl - b.pnl).slice(0, 3);
+  const favCoin = Object.entries(coinVol).sort((a, b) => b[1] - a[1])[0];
+  const favHour = hours.indexOf(Math.max(...hours));
+  const positions = (d.state?.assetPositions || []).map((x) => x.position).filter(Boolean).map((p) => ({
+    name: name(p.coin), szi: Number(p.szi), entry: Number(p.entryPx), upnl: Number(p.unrealizedPnl), lev: p.leverage?.value, liq: p.liquidationPx ? Number(p.liquidationPx) : null, value: Number(p.positionValue),
+  })).sort((a, b) => Math.abs(b.upnl) - Math.abs(a.upnl));
+
+  // archetype
+  const memes = /^(k?PEPE|k?BONK|WIF|k?SHIB|DOGE|POPCAT|BRETT|MEW|k?FLOKI|FARTCOIN|TURBO|PNUT|GOAT|MOODENG|PENGU|TRUMP|SPX|k?NEIRO|CHILLGUY|BOME|MEME)$/i;
+  let archetype = ["The Coin Flipper", "Wins some, loses some, pays fees on all of it."];
+  if (liqCount >= 3) archetype = ["The Liquidation Speedrunner", `${liqCount} liquidations. The engine knows you by name.`];
+  else if (fees > Math.abs(pnl) && fees > 100) archetype = ["The Fee Donor", "Validators thank you for your service."];
+  else if (fundingNet > Math.abs(pnl) * 0.3 && fundingNet > 100) archetype = ["The Funding Farmer", "Gets paid to wait. Annoyingly smart."];
+  else if (favCoin && memes.test(favCoin[0])) archetype = ["The Memecoin Mercenary", `Most traded: ${favCoin[0]}. No further questions.`];
+  else if (winRate >= 0.65 && trades.length >= 10) archetype = ["The Sniper", `${Math.round(winRate * 100)}% win rate. Suspiciously good.`];
+  else if (medianHold && medianHold < 36e5) archetype = ["The Paper Hands", `Median hold: ${dur(medianHold)}. Commitment issues.`];
+  else if (medianHold > 7 * DAY) archetype = ["The Diamond Hands", `Median hold: ${dur(medianHold)}. Touch grass? Never.`];
+  else if (winRate < 0.35 && trades.length >= 10) archetype = ["The Contrarian Indicator", "Do the opposite of this wallet."];
+
+  return {
+    user: d.user, pnl, roi, peak, series, trades, sortedTrades, winRate, wins, bestStreak: best, volume, fees, builderFees, fundingNet,
+    liqCount, liqLoss, bestCoins, cursed, favCoin, favHour, positions, archetype, medianHold, capped: d.capped,
+    firstTime: d.fills.length ? d.fills[0].time : null, fillCount: d.fills.length,
+    longest: trades.reduce((a, t) => (!a || t.closeTime - t.openTime > a.closeTime - a.openTime ? t : a), null),
+  };
+}
+
+// biggest miss: after closing a winner/loser, how far did price keep running in your direction within 30 days?
+async function findMiss(S, info) {
+  const cands = S.trades.filter((t) => t.outSz > 0 && t.closeTime).sort((a, b) => b.outNotional - a.outNotional).slice(0, 8);
+  let bestMiss = null;
+  for (const t of cands) {
+    const end = Math.min(t.closeTime + 30 * DAY, Date.now());
+    if (end - t.closeTime < 36e5) continue;
+    try {
+      const cs = await info({ type: "candleSnapshot", req: { coin: t.coin, interval: "4h", startTime: t.closeTime, endTime: end } });
+      if (!Array.isArray(cs) || !cs.length) continue;
+      const ext = t.side > 0 ? Math.max(...cs.map((c) => Number(c.h))) : Math.min(...cs.map((c) => Number(c.l)));
+      const missed = (t.side > 0 ? ext - t.exit : t.exit - ext) * t.outSz;
+      if (missed > 0 && (!bestMiss || missed > bestMiss.missed)) bestMiss = { trade: t, ext, missed, when: cs.find((c) => Number(t.side > 0 ? c.h : c.l) === ext)?.t };
+    } catch {}
+  }
+  return bestMiss;
+}
+
+// ---------- moods ----------
+const MOODS = {
+  rekt:  { title: "FULLY REKT", bg: ["#2a0004", "#050003"], acc: "#ff2d3d", ink: "#ffe9ea", fx: "skulls", emoji: "💀",
+           quips: ["The liquidation engine sends its regards.", "Your PnL chart is a black ski slope.", "Exit liquidity of the year. Congrats?", "Time to touch grass. Lots of grass."] },
+  pain:  { title: "DOWN BAD", bg: ["#330a10", "#0a0a12"], acc: "#ff4d5e", ink: "#ffeef0", fx: "rain", emoji: "😭",
+           quips: ["Buy high, sell low: executed flawlessly.", "The market took your lunch money. And your lunch.", "Down bad, but still here. Respect."] },
+  cope:  { title: "IT'S JUST A DIP", bg: ["#18202e", "#090b10"], acc: "#8fb0dc", ink: "#eef3fb", fx: "drizzle", emoji: "🫠",
+           quips: ["Basically breakeven if you squint.", "Fees ate your gains. Fees always eat.", "Zoom out. No, further. Further."] },
+  meh:   { title: "TECHNICALLY PROFITABLE", bg: ["#0b2a1c", "#06100b"], acc: "#5ef0a0", ink: "#eafff3", fx: "sparkle", emoji: "😏",
+           quips: ["Up only (slightly).", "Beat a savings account. Barely.", "Profitable. Technically. We checked twice."] },
+  party: { title: "PARTY TIME", bg: ["#04402a", "#0a0b26"], acc: "#3dff8c", ink: "#efffef", fx: "confetti", emoji: "🎉",
+           quips: ["Absolutely cooking.", "Bull market brain: unlocked.", "The funding gods smiled upon you."] },
+  god:   { title: "GENERATIONAL RUN", bg: ["#4a3200", "#22003f"], acc: "#ffd23d", ink: "#fff8e1", fx: "rockets", emoji: "🚀",
+           quips: ["Generational wealth speedrun.", "Screenshot this before it reverts.", "Retire? You just got warmed up."] },
+};
+function moodFor(S) {
+  const r = S.roi;
+  if (r !== null && isFinite(r)) {
+    if (r <= -0.5) return ["rekt", clamp(-r, 0.5, 1)];
+    if (r <= -0.1) return ["pain", clamp(-r / 0.5, 0.2, 1)];
+    if (r < 0) return ["cope", 0.3];
+    if (r < 0.1) return ["meh", 0.3];
+    if (r < 1) return ["party", clamp(r, 0.25, 1)];
+    return ["god", clamp(r / 5, 0.5, 1)];
+  }
+  const p = S.pnl;
+  if (p <= -10000) return ["rekt", 0.8]; if (p <= -500) return ["pain", 0.6]; if (p < 0) return ["cope", 0.3];
+  if (p < 500) return ["meh", 0.3]; if (p < 50000) return ["party", 0.7]; return ["god", 0.9];
+}
+
+// ---------- canvas drawing ----------
+const FONT_D = "Anton, Impact, sans-serif", FONT_B = "'Space Grotesk', system-ui, sans-serif", FONT_M = "'JetBrains Mono', ui-monospace, monospace";
+function fit(ctx, text, maxW, size, family, weight = "") {
+  let s = size; ctx.font = `${weight} ${s}px ${family}`;
+  while (ctx.measureText(text).width > maxW && s > 12) { s -= 2; ctx.font = `${weight} ${s}px ${family}`; }
+  return s;
+}
+function wrap(ctx, text, x, y, maxW, lh) {
+  const words = text.split(" "); let line = "", yy = y;
+  for (const w of words) { const t = line ? line + " " + w : w; if (ctx.measureText(t).width > maxW && line) { ctx.fillText(line, x, yy); line = w; yy += lh; } else line = t; }
+  if (line) ctx.fillText(line, x, yy); return yy;
+}
+function rrect(ctx, x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+function panel(ctx, x, y, w, h, alpha = 0.42) { ctx.save(); ctx.fillStyle = `rgba(0,0,0,${alpha})`; rrect(ctx, x, y, w, h, 28); ctx.fill(); ctx.strokeStyle = "rgba(255,255,255,.08)"; ctx.lineWidth = 2; ctx.stroke(); ctx.restore(); }
+function emoji(ctx, e, x, y, size, rot = 0, alpha = 1) { ctx.save(); ctx.globalAlpha = alpha; ctx.translate(x, y); ctx.rotate(rot); ctx.font = `${size}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif`; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(e, 0, 0); ctx.restore(); }
+
+function drawFx(ctx, fx, r, k) {
+  ctx.save();
+  if (fx === "confetti" || fx === "rockets") {
+    const cols = fx === "rockets" ? ["#ffd23d", "#ff7ad9", "#7af7ff", "#ffffff", "#b388ff"] : ["#3dff8c", "#ffe14d", "#ff6fb5", "#6fd3ff", "#ffffff"];
+    const n = Math.round(50 + 170 * k);
+    for (let i = 0; i < n; i++) { ctx.save(); ctx.globalAlpha = 0.35 + r() * 0.5; ctx.translate(r() * W, r() * H); ctx.rotate(r() * 6.28); ctx.fillStyle = pick(r, cols); ctx.fillRect(-9, -4, 14 + r() * 14, 7 + r() * 5); ctx.restore(); }
+    const em = fx === "rockets" ? ["🚀", "💰", "💎", "🍾", "🤑", "🔥"] : ["🎉", "🍾", "💸", "🥳", "🔥"];
+    const m = Math.round((fx === "rockets" ? 10 : 6) + 12 * k);
+    for (let i = 0; i < m; i++) emoji(ctx, pick(r, em), r() * W, r() * H, 54 + r() * 70, (r() - 0.5) * 0.8, 0.28 + r() * 0.3);
+    if (fx === "rockets") { const g = ctx.createRadialGradient(W * 0.8, 150, 10, W * 0.8, 150, 700); g.addColorStop(0, "rgba(255,210,61,.35)"); g.addColorStop(1, "rgba(255,210,61,0)"); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H); }
+  } else if (fx === "sparkle") {
+    for (let i = 0; i < 10; i++) emoji(ctx, pick(r, ["✨", "💵", "📈"]), r() * W, r() * H, 40 + r() * 40, 0, 0.22);
+  } else {
+    const n = fx === "drizzle" ? 70 : Math.round(140 + 220 * k);
+    ctx.strokeStyle = fx === "skulls" ? "rgba(255,90,100,.22)" : "rgba(180,200,255,.2)"; ctx.lineWidth = 2.5;
+    for (let i = 0; i < n; i++) { const x = r() * W, y = r() * H, l = 30 + r() * 60; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x - l * 0.25, y + l); ctx.stroke(); }
+    if (fx !== "drizzle") {
+      const em = fx === "skulls" ? ["💀", "🪦", "⚰️", "📉", "🩸"] : ["🌧️", "📉", "😭", "🧻"];
+      const m = Math.round((fx === "skulls" ? 8 : 5) + 14 * k);
+      for (let i = 0; i < m; i++) emoji(ctx, pick(r, em), r() * W, r() * H, 50 + r() * 70, (r() - 0.5) * 0.6, 0.22 + r() * 0.28);
+      const g = ctx.createRadialGradient(W / 2, H / 2, 300, W / 2, H / 2, 900); g.addColorStop(0, "rgba(0,0,0,0)"); g.addColorStop(1, fx === "skulls" ? "rgba(120,0,10,.55)" : "rgba(0,0,0,.45)"); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    }
+  }
+  ctx.restore();
+}
+
+function newCard(mood, k, seed, user) {
+  const cv = document.createElement("canvas"); cv.width = W; cv.height = H;
+  const ctx = cv.getContext("2d"); const r = rng(seed);
+  const g = ctx.createLinearGradient(0, 0, W * 0.4, H); g.addColorStop(0, mood.bg[0]); g.addColorStop(1, mood.bg[1]);
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = "rgba(255,255,255,.035)"; for (let x = 30; x < W; x += 54) for (let y = 30; y < H; y += 54) ctx.fillRect(x, y, 3, 3);
+  drawFx(ctx, mood.fx, r, k);
+  ctx.textBaseline = "alphabetic";
+  ctx.fillStyle = mood.ink; ctx.font = `44px ${FONT_D}`; ctx.fillText("HYPER", 64, 104);
+  const w = ctx.measureText("HYPER").width; ctx.fillStyle = mood.acc; ctx.fillText("UNWRAPPED", 64 + w + 6, 104);
+  ctx.textAlign = "right"; ctx.fillStyle = "rgba(255,255,255,.6)"; ctx.font = `500 28px ${FONT_M}`; ctx.fillText(short(user), W - 64, 100);
+  ctx.textAlign = "left"; ctx.font = `500 22px ${FONT_M}`; ctx.fillStyle = "rgba(255,255,255,.4)";
+  ctx.fillText("hyperliquid · not financial advice", 64, H - 50);
+  return { cv, ctx, r };
+}
+function label(ctx, text, x, y, color) { ctx.font = `700 30px ${FONT_M}`; ctx.fillStyle = color; ctx.fillText(text.toUpperCase(), x, y); }
+function pill(ctx, text, x, y, bg, fg) { ctx.font = `700 30px ${FONT_B}`; const w = ctx.measureText(text).width + 44; ctx.fillStyle = bg; rrect(ctx, x, y - 40, w, 58, 29); ctx.fill(); ctx.fillStyle = fg; ctx.fillText(text, x + 22, y); return w; }
+
+function drawChart(ctx, series, x, y, w, h, acc) {
+  if (series.length < 2) { ctx.fillStyle = "rgba(255,255,255,.5)"; ctx.font = `500 28px ${FONT_M}`; ctx.fillText("not enough history to chart", x + 30, y + h / 2); return; }
+  const t0 = series[0][0], t1 = series[series.length - 1][0];
+  const vals = series.map((s) => s[1]), lo = Math.min(0, ...vals), hi = Math.max(0, ...vals), span = hi - lo || 1;
+  const X = (t) => x + ((t - t0) / (t1 - t0 || 1)) * w, Y = (v) => y + h - ((v - lo) / span) * h;
+  const zero = Y(0);
+  ctx.save(); ctx.strokeStyle = "rgba(255,255,255,.25)"; ctx.setLineDash([10, 10]); ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x, zero); ctx.lineTo(x + w, zero); ctx.stroke(); ctx.restore();
+  for (const [sign, col] of [[1, "#3dff8c"], [-1, "#ff4d5e"]]) {
+    ctx.save(); ctx.beginPath(); if (sign > 0) ctx.rect(x, y - 10, w, zero - y + 10); else ctx.rect(x, zero, w, y + h - zero + 10); ctx.clip();
+    const g = ctx.createLinearGradient(0, y, 0, y + h); g.addColorStop(0, sign > 0 ? "rgba(61,255,140,.45)" : "rgba(255,77,94,.05)"); g.addColorStop(1, sign > 0 ? "rgba(61,255,140,.03)" : "rgba(255,77,94,.45)");
+    ctx.beginPath(); ctx.moveTo(X(t0), zero); for (const [t, v] of series) ctx.lineTo(X(t), Y(v)); ctx.lineTo(X(t1), zero); ctx.closePath(); ctx.fillStyle = g; ctx.fill();
+    ctx.beginPath(); series.forEach(([t, v], i) => (i ? ctx.lineTo(X(t), Y(v)) : ctx.moveTo(X(t), Y(v)))); ctx.strokeStyle = col; ctx.lineWidth = 6; ctx.lineJoin = "round"; ctx.shadowColor = col; ctx.shadowBlur = 18; ctx.stroke(); ctx.restore();
+  }
+  const last = series[series.length - 1]; ctx.beginPath(); ctx.arc(X(last[0]), Y(last[1]), 12, 0, 6.28); ctx.fillStyle = last[1] >= 0 ? "#3dff8c" : "#ff4d5e"; ctx.fill();
+  ctx.font = `500 22px ${FONT_M}`; ctx.fillStyle = "rgba(255,255,255,.5)"; ctx.fillText(monthStr(t0), x, y + h + 40); ctx.textAlign = "right"; ctx.fillText("now", x + w, y + h + 40); ctx.textAlign = "left";
+}
+
+function buildCards(S, miss) {
+  const seed = hashStr(S.user);
+  const [mk, k] = moodFor(S); const M = MOODS[mk];
+  const r0 = rng(seed);
+  const cards = [];
+  const green = MOODS.party, red = MOODS.pain;
+
+  // 1. cover
+  { const { cv, ctx } = newCard(M, k, seed, S.user);
+    emoji(ctx, M.emoji, W - 150, 250, 150, 0.12);
+    const ts = fit(ctx, M.title, W - 300, 120, FONT_D); ctx.fillStyle = M.acc; ctx.fillText(M.title, 64, 230 + (120 - ts) / 2);
+    label(ctx, "all-time pnl", 64, 330, "rgba(255,255,255,.65)");
+    const ps = fit(ctx, money(S.pnl), W - 128, 230, FONT_D); ctx.fillStyle = M.ink; ctx.shadowColor = M.acc; ctx.shadowBlur = 30 * k; ctx.fillText(money(S.pnl), 64, 560 - (230 - ps) / 2); ctx.shadowBlur = 0;
+    let xx = 64;
+    if (S.roi !== null && isFinite(S.roi)) xx += pill(ctx, pct(S.roi) + " return on deposits", xx, 650, M.acc, "#0a0a0a") + 16;
+    panel(ctx, 64, 700, W - 128, 380);
+    drawChart(ctx, S.series, 104, 740, W - 208, 270, M.acc);
+    ctx.fillStyle = M.ink; ctx.font = `700 46px ${FONT_B}`; wrap(ctx, "“" + pick(r0, M.quips) + "”", 64, 1170, W - 128, 56);
+    ctx.font = `500 26px ${FONT_M}`; ctx.fillStyle = "rgba(255,255,255,.6)";
+    ctx.fillText(`${S.firstTime ? "degen since " + monthStr(S.firstTime) + " · " : ""}${S.trades.length.toLocaleString()} trades${S.capped ? " (last 10k fills)" : ""}`, 64, 1252);
+    cards.push({ name: "pnl", cv });
+  }
+  // 2. archetype
+  { const { cv, ctx } = newCard(M, k * 0.7, seed + 1, S.user);
+    label(ctx, "your trader archetype", 64, 230, M.acc);
+    ctx.fillStyle = M.ink; const words = S.archetype[0].toUpperCase().split(" ");
+    const tsz = words.length > 3 ? 130 : 160; let y = 230 + tsz; for (const w of words) { const s = fit(ctx, w, W - 128, tsz, FONT_D); ctx.fillText(w, 64, y); y += s + 6; }
+    ctx.font = `700 46px ${FONT_B}`; ctx.fillStyle = "rgba(255,255,255,.85)"; wrap(ctx, S.archetype[1], 64, y + 40, W - 128, 56);
+    panel(ctx, 64, 1050, W - 128, 200);
+    const stats = [["win rate", Math.round(S.winRate * 100) + "%"], ["best streak", S.bestStreak + "W"], ["median hold", S.medianHold ? dur(S.medianHold) : "—"]];
+    stats.forEach(([l, v], i) => { const x = 104 + i * 310; ctx.font = `500 24px ${FONT_M}`; ctx.fillStyle = "rgba(255,255,255,.55)"; ctx.fillText(l.toUpperCase(), x, 1120); ctx.font = `70px ${FONT_D}`; ctx.fillStyle = M.acc; ctx.fillText(v, x, 1210); });
+    cards.push({ name: "archetype", cv });
+  }
+  // 3/4. best + worst trade
+  const tradeCard = (t, best) => {
+    const P = best ? green : red; const kk = clamp(Math.abs(t.pnl) / (Math.abs(S.pnl) + 1), 0.3, 1);
+    const { cv, ctx } = newCard(P, kk, seed + (best ? 2 : 3), S.user);
+    label(ctx, best ? "best trade" : "worst trade", 64, 230, P.acc);
+    const cs = fit(ctx, t.name, W - 128, 260, FONT_D); ctx.fillStyle = P.ink; ctx.fillText(t.name, 64, 230 + 40 + cs * 0.92);
+    let y = 230 + 40 + cs * 0.92 + 90;
+    let xx = 64; xx += pill(ctx, t.side > 0 ? "LONG" : "SHORT", xx, y, t.side > 0 ? "#3dff8c" : "#ff4d5e", "#0a0a0a") + 14;
+    if (t.liq) pill(ctx, "LIQUIDATED 💀", xx, y, "#000", "#ff4d5e");
+    const ps = fit(ctx, money(t.pnl), W - 128, 200, FONT_D); ctx.fillStyle = P.acc; ctx.shadowColor = P.acc; ctx.shadowBlur = 24; ctx.fillText(money(t.pnl), 64, y + 60 + ps); ctx.shadowBlur = 0;
+    y = y + 60 + ps + 70;
+    panel(ctx, 64, y, W - 128, 230);
+    const rows = [["entry → exit", `${px(t.entry)} → ${px(t.exit)}`], ["held", dur(t.closeTime - t.openTime)], ["closed", dateStr(t.closeTime)]];
+    rows.forEach(([l, v], i) => { ctx.font = `500 26px ${FONT_M}`; ctx.fillStyle = "rgba(255,255,255,.55)"; ctx.fillText(l.toUpperCase(), 104, y + 60 + i * 66); ctx.textAlign = "right"; ctx.font = `700 36px ${FONT_B}`; ctx.fillStyle = P.ink; ctx.fillText(v, W - 104, y + 62 + i * 66); ctx.textAlign = "left"; });
+    const q = best ? pick(r0, ["Called it. Insufferable now.", "Main character energy.", "Frame it. Put it on the fridge.", "This is the one you tell people about."])
+                   : t.liq ? pick(r0, ["Leverage: the gift that keeps on taking.", "Stop loss? Never heard of her."]) : pick(r0, ["We don't talk about this one.", "Character-building experience.", "The market said no. Loudly."]);
+    ctx.font = `700 44px ${FONT_B}`; ctx.fillStyle = P.ink; wrap(ctx, "“" + q + "”", 64, Math.min(y + 330, 1220), W - 128, 54);
+    return { name: best ? "best-trade" : "worst-trade", cv };
+  };
+  const bestT = S.sortedTrades[0], worstT = S.sortedTrades[S.sortedTrades.length - 1];
+  if (bestT && bestT.pnl > 0) cards.push(tradeCard(bestT, true));
+  if (worstT && worstT.pnl < 0) cards.push(tradeCard(worstT, false));
+  // 5/6. assets
+  const assetCard = (list, good) => {
+    const P = good ? MOODS.party : MOODS.rekt;
+    const { cv, ctx } = newCard(P, 0.55, seed + (good ? 4 : 5), S.user);
+    label(ctx, good ? "your best assets" : "your cursed assets", 64, 230, P.acc);
+    const head = good ? "MONEY PRINTERS" : "THESE COINS OWE YOU";
+    const hs = fit(ctx, head, W - 128, 120, FONT_D); ctx.fillStyle = P.ink; ctx.fillText(head, 64, 230 + 30 + hs);
+    const medals = good ? ["🥇", "🥈", "🥉"] : ["💀", "🪦", "⚰️"];
+    const max = Math.max(...list.map((c) => Math.abs(c.pnl)), 1);
+    list.forEach((c, i) => {
+      const y = 460 + i * 232; panel(ctx, 64, y, W - 128, 206, 0.45);
+      emoji(ctx, medals[i], 150, y + 105, 90);
+      const ns = fit(ctx, c.name, 420, 96, FONT_D); ctx.fillStyle = P.ink; ctx.fillText(c.name, 230, y + 90 + (96 - ns) / 3);
+      ctx.font = `500 24px ${FONT_M}`; ctx.fillStyle = "rgba(255,255,255,.55)"; ctx.fillText(`${c.trades} trades · ${money(c.vol, false)} volume`, 232, y + 150);
+      ctx.textAlign = "right"; const vs = fit(ctx, money(c.pnl), 330, 72, FONT_D); ctx.fillStyle = P.acc; ctx.fillText(money(c.pnl), W - 104, y + 100); ctx.textAlign = "left";
+      ctx.fillStyle = P.acc; ctx.globalAlpha = 0.85; rrect(ctx, 232, y + 170, (W - 336) * (Math.abs(c.pnl) / max), 12, 6); ctx.fill(); ctx.globalAlpha = 1;
+    });
+    ctx.font = `700 40px ${FONT_B}`; ctx.fillStyle = P.ink;
+    wrap(ctx, "“" + (good ? pick(r0, ["Never selling. (Sold immediately.)", "Your ride-or-dies.", "Loyalty rewarded, for once."]) : pick(r0, ["Blocked. Reported. Still trading it tomorrow.", "Revenge trading enthusiasts only.", "Some coins just hate you specifically."])) + "”", 64, 460 + list.length * 232 + 56, W - 128, 50);
+    return { name: good ? "best-assets" : "cursed-assets", cv };
+  };
+  if (S.bestCoins.length) cards.push(assetCard(S.bestCoins, true));
+  if (S.cursed.length) cards.push(assetCard(S.cursed, false));
+  // 7. biggest miss
+  if (miss) {
+    const t = miss.trade, P = MOODS.cope;
+    const { cv, ctx } = newCard(P, 0.6, seed + 6, S.user);
+    label(ctx, "biggest miss", 64, 230, P.acc);
+    ctx.fillStyle = P.ink; ctx.font = `120px ${FONT_D}`; ctx.fillText("PAPER HANDS", 64, 370); emoji(ctx, "🧻", W - 140, 320, 120, 0.2);
+    ctx.font = `700 44px ${FONT_B}`; ctx.fillStyle = "rgba(255,255,255,.9)";
+    let y = wrap(ctx, `You closed your ${t.name} ${t.side > 0 ? "long" : "short"} at ${px(t.exit)}.`, 64, 480, W - 128, 56);
+    y = wrap(ctx, `Within 30 days it ${t.side > 0 ? "ran to" : "dumped to"} ${px(miss.ext)}.`, 64, y + 64, W - 128, 56);
+    label(ctx, "left on the table", 64, y + 130, "rgba(255,255,255,.6)");
+    const ms = fit(ctx, money(miss.missed, false), W - 128, 220, FONT_D); ctx.fillStyle = "#ffd23d"; ctx.shadowColor = "#ffd23d"; ctx.shadowBlur = 24; ctx.fillText(money(miss.missed, false), 64, y + 150 + ms); ctx.shadowBlur = 0;
+    ctx.font = `700 42px ${FONT_B}`; ctx.fillStyle = P.ink; wrap(ctx, "“" + pick(r0, ["Hindsight is 20/20. Your exits are 20/200.", "You sold the bottom of the top.", "Patience is a virtue. You have other virtues."]) + "”", 64, Math.min(y + 150 + ms + 120, 1210), W - 128, 52);
+    cards.push({ name: "biggest-miss", cv });
+  }
+  // 8. current bags
+  if (S.positions.length) {
+    const up = S.positions.reduce((s, p) => s + p.upnl, 0), P = up >= 0 ? MOODS.meh : MOODS.cope;
+    const { cv, ctx } = newCard(P, 0.4, seed + 7, S.user);
+    label(ctx, "current bags", 64, 230, P.acc);
+    ctx.fillStyle = P.ink; ctx.font = `120px ${FONT_D}`; ctx.fillText(up >= 0 ? "STILL COOKING" : "STILL HOLDING", 64, 370);
+    ctx.font = `500 30px ${FONT_M}`; ctx.fillStyle = "rgba(255,255,255,.65)"; ctx.fillText(`unrealized ${money(up)}`, 64, 430);
+    S.positions.slice(0, 5).forEach((p, i) => {
+      const y = 480 + i * 150; panel(ctx, 64, y, W - 128, 126, 0.45);
+      ctx.font = `64px ${FONT_D}`; ctx.fillStyle = P.ink; ctx.fillText(p.name, 104, y + 84);
+      ctx.font = `700 26px ${FONT_M}`; ctx.fillStyle = p.szi > 0 ? "#3dff8c" : "#ff4d5e"; ctx.fillText(`${p.szi > 0 ? "LONG" : "SHORT"}${p.lev ? " " + p.lev + "x" : ""}`, 104 + ctx.measureText("").width + 360, y + 76);
+      ctx.textAlign = "right"; ctx.font = `60px ${FONT_D}`; ctx.fillStyle = p.upnl >= 0 ? "#3dff8c" : "#ff4d5e"; ctx.fillText(money(p.upnl), W - 104, y + 84); ctx.textAlign = "left";
+    });
+    cards.push({ name: "current-bags", cv });
+  }
+  // 9. stats
+  { const { cv, ctx } = newCard(M, k * 0.5, seed + 8, S.user);
+    label(ctx, "the receipts", 64, 230, M.acc);
+    ctx.fillStyle = M.ink; ctx.font = `120px ${FONT_D}`; ctx.fillText("BY THE NUMBERS", 64, 370);
+    const grid = [
+      ["volume traded", money(S.volume, false)], ["trades closed", S.trades.length.toLocaleString()],
+      ["fees paid", money(S.fees, false)], ["builder fees tipped", money(S.builderFees, false)],
+      ["funding", money(S.fundingNet)], ["liquidations", String(S.liqCount)],
+      ["most traded", S.favCoin ? S.favCoin[0] : "—"], ["favorite hour", (S.favHour ?? 0).toString().padStart(2, "0") + ":00 UTC"],
+    ];
+    grid.forEach(([l, v], i) => {
+      const col = i % 2, row = Math.floor(i / 2), x = 64 + col * 486, y = 430 + row * 200;
+      panel(ctx, x, y, 466, 176, 0.42);
+      ctx.font = `500 24px ${FONT_M}`; ctx.fillStyle = "rgba(255,255,255,.55)"; ctx.fillText(l.toUpperCase(), x + 34, y + 54);
+      const vs = fit(ctx, v, 400, 76, FONT_D); ctx.fillStyle = l === "liquidations" && S.liqCount ? "#ff4d5e" : l === "funding" ? (S.fundingNet >= 0 ? "#3dff8c" : "#ff4d5e") : M.ink; ctx.fillText(v, x + 34, y + 140);
+    });
+    ctx.font = `700 38px ${FONT_B}`; ctx.fillStyle = M.ink;
+    const roast = S.fees > Math.abs(S.pnl) ? `You paid ${money(S.fees, false)} in fees. The exchange thanks you.` : S.liqCount ? `${S.liqCount} liquidation${S.liqCount > 1 ? "s" : ""}. Leverage is a hell of a drug.` : `Win rate ${Math.round(S.winRate * 100)}%. ${S.winRate > 0.5 ? "Not bad, degen." : "A coin flip would be proud."}`;
+    wrap(ctx, roast, 64, 1250, W - 128, 46);
+    cards.push({ name: "receipts", cv });
+  }
+  return { cards, moodKey: mk, k };
+}
+
+// ---------- on-screen fx ----------
+const fxc = $("#fx"), fctx = fxc.getContext("2d");
+let fxParts = [], fxMode = null, fxRaf = 0;
+function setFx(mode, k) {
+  fxMode = mode; const n = mode ? Math.round((mode === "confetti" || mode === "rockets" ? 60 : 90) * (0.4 + k)) : 0;
+  const cols = mode === "rockets" ? ["#ffd23d", "#ff7ad9", "#7af7ff", "#fff"] : ["#3dff8c", "#ffe14d", "#ff6fb5", "#6fd3ff"];
+  fxParts = Array.from({ length: n }, () => ({ x: Math.random(), y: Math.random(), v: 0.0006 + Math.random() * 0.002, r: Math.random() * 6.28, s: (Math.random() - 0.5) * 0.08, c: cols[Math.floor(Math.random() * cols.length)] }));
+  cancelAnimationFrame(fxRaf); if (mode) loop();
+  else fctx.clearRect(0, 0, fxc.width, fxc.height);
+}
+function loop() {
+  const w = (fxc.width = innerWidth * devicePixelRatio), h = (fxc.height = innerHeight * devicePixelRatio);
+  fctx.clearRect(0, 0, w, h);
+  const party = fxMode === "confetti" || fxMode === "rockets" || fxMode === "sparkle";
+  for (const p of fxParts) {
+    p.y += p.v * (party ? 1 : 4); p.r += p.s; if (p.y > 1.05) { p.y = -0.05; p.x = Math.random(); }
+    const x = p.x * w, y = p.y * h;
+    if (party) { fctx.save(); fctx.translate(x, y); fctx.rotate(p.r); fctx.globalAlpha = 0.55; fctx.fillStyle = p.c; fctx.fillRect(-5 * devicePixelRatio, -2.5 * devicePixelRatio, 10 * devicePixelRatio, 5 * devicePixelRatio); fctx.restore(); }
+    else { fctx.strokeStyle = fxMode === "skulls" ? "rgba(255,80,90,.35)" : "rgba(170,190,255,.25)"; fctx.lineWidth = 1.5 * devicePixelRatio; fctx.beginPath(); fctx.moveTo(x, y); fctx.lineTo(x - 4 * devicePixelRatio, y + 22 * devicePixelRatio); fctx.stroke(); }
+  }
+  fxRaf = requestAnimationFrame(loop);
+}
+
+// ---------- story viewer ----------
+let deck = [], idx = 0, urls = [];
+function show(i) {
+  idx = clamp(i, 0, deck.length - 1);
+  $("#cardImg").src = urls[idx];
+  $("#prog").innerHTML = deck.map((_, j) => `<i data-j="${j}" class="${j < idx ? "done" : j === idx ? "on" : ""}"></i>`).join("");
+  $("#count").textContent = `${idx + 1} / ${deck.length}`;
+}
+$("#prog").addEventListener("click", (e) => { const j = e.target.dataset.j; if (j != null) show(+j); });
+$("#tapL").onclick = $("#prev").onclick = () => show(idx - 1);
+$("#tapR").onclick = $("#next").onclick = () => show(idx + 1);
+addEventListener("keydown", (e) => { if ($("#story").style.display !== "block") return; if (e.key === "ArrowRight") show(idx + 1); if (e.key === "ArrowLeft") show(idx - 1); });
+let tx = null; $("#stage").addEventListener("touchstart", (e) => (tx = e.touches[0].clientX), { passive: true });
+$("#stage").addEventListener("touchend", (e) => { if (tx == null) return; const dx = e.changedTouches[0].clientX - tx; if (Math.abs(dx) > 40) show(idx + (dx < 0 ? 1 : -1)); tx = null; });
+
+const blobOf = (cv) => new Promise((ok) => cv.toBlob(ok, "image/png"));
+const fileName = (c) => `hyper-unwrapped-${short(current.user).replace("…", "")}-${c.name}.png`;
+function download(blob, name) { const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000); }
+$("#save").onclick = async () => { try { download(await blobOf(deck[idx].cv), fileName(deck[idx])); toast("Saved"); } catch { toast("Long-press the card to save it"); } };
+$("#saveAll").onclick = async () => { try { for (const c of deck) { download(await blobOf(c.cv), fileName(c)); await new Promise((ok) => setTimeout(ok, 250)); } toast(`Saved ${deck.length} cards`); } catch { toast("Long-press each card to save it"); } };
+$("#share").onclick = async () => {
+  try {
+    const f = new File([await blobOf(deck[idx].cv)], fileName(deck[idx]), { type: "image/png" });
+    if (navigator.canShare && navigator.canShare({ files: [f] })) await navigator.share({ files: [f], text: "My Hyperliquid, unwrapped 👀" });
+    else { download(f, f.name); toast("Sharing not supported here, saved instead"); }
+  } catch (e) { if (e && e.name !== "AbortError") toast("Long-press the card to save it"); }
+};
+$("#again").onclick = () => { $("#story").style.display = "none"; $("#landing").style.display = "block"; setFx(null); scrollTo(0, 0); };
+
+// ---------- run ----------
+let current = null;
+function setStatus(m, err) { const s = $("#status"); s.textContent = m; s.classList.toggle("err", !!err); }
+function setProg(p) { const b = $("#bar"); b.style.display = p == null ? "none" : "block"; $("#bar i").style.width = (p || 0) * 100 + "%"; }
+
+async function run(user, info, demo) {
+  $("#goBtn").disabled = true;
+  try {
+    const raw = await fetchAll(user, info, (p, m) => { setProg(p); setStatus(m); });
+    if (!raw.fills.length) throw new Error("No trades found for this address. Either a fresh wallet or a very patient one.");
+    const S = analyze(raw);
+    setProg(0.82); setStatus("Measuring your biggest regret…");
+    const miss = await findMiss(S, info);
+    setProg(0.92); setStatus("Printing your cards…");
+    await Promise.all([document.fonts.load(`100px Anton`), document.fonts.load(`700 40px "Space Grotesk"`), document.fonts.load(`500 20px "JetBrains Mono"`)]).catch(() => {});
+    const { cards, moodKey, k } = buildCards(S, miss);
+    current = { user, S };
+    deck = cards; urls.forEach((u) => URL.revokeObjectURL(u));
+    urls = cards.map((c) => c.cv.toDataURL("image/png"));
+    setProg(null); setStatus("");
+    $("#landing").style.display = "none"; $("#story").style.display = "block";
+    document.documentElement.style.setProperty("--acc", MOODS[moodKey].acc);
+    setFx(MOODS[moodKey].fx, k); show(0); scrollTo(0, 0);
+    if (!demo) try { localStorage.setItem("hu:last", user); } catch {}
+  } catch (e) {
+    setProg(null);
+    setStatus(/Failed to fetch|NetworkError|Load failed/i.test(e.message) ? "Couldn't reach Hyperliquid's API from here. Try the hosted site, or a demo." : e.message, true);
+  } finally { $("#goBtn").disabled = false; }
+}
+
+$("#form").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const a = $("#addr").value.trim();
+  if (!/^0x[0-9a-fA-F]{40}$/.test(a)) { $("#addr").classList.add("bad"); setStatus("That's not a valid 0x address.", true); return; }
+  $("#addr").classList.remove("bad");
+  run(a.toLowerCase(), realInfo, false);
+});
+try { const last = localStorage.getItem("hu:last"); if (last) $("#addr").value = last; } catch {}
+
+// ---------- demo data (synthetic, clearly labelled) ----------
+function demoInfo(kind) {
+  const r = rng(hashStr(kind) + 7);
+  const plan = { god: { edge: 0.62, mult: 9, n: 160, liq: 0 }, party: { edge: 0.56, mult: 2.4, n: 220, liq: 0 }, cope: { edge: 0.5, mult: 0.9, n: 260, liq: 1 }, rekt: { edge: 0.3, mult: 1.6, n: 200, liq: 5 } }[kind];
+  const coins = [["BTC", 64000, 0.08], ["ETH", 3100, 1.4], ["SOL", 150, 30], ["HYPE", 24, 300], ["kPEPE", 0.011, 900000], ["WIF", 2.1, 4000], ["DOGE", 0.16, 60000], ["SUI", 1.8, 5000]];
+  const now = Date.now(), t0 = now - 420 * DAY;
+  const fills = [], funding = []; let tid = 1, t = t0;
+  const priceAt = (c, time) => c[1] * (1 + 0.35 * Math.sin(time / (37 * DAY) + c[1]) + 0.15 * Math.sin(time / (5 * DAY) + c[2]));
+  for (let i = 0; i < plan.n; i++) {
+    t += (r() * 2.2 + 0.2) * DAY * (420 / plan.n) * 0.45;
+    if (t > now - DAY) break;
+    const c = coins[Math.floor(Math.pow(r(), 1.4) * coins.length)];
+    const side = r() < 0.6 ? 1 : -1, entry = priceAt(c, t), sz = c[2] * (0.3 + r() * 2.2) * (r() < 0.05 ? 6 : 1) * ({ god: 1, party: 0.35, cope: 0.15, rekt: 1 }[kind]);
+    const win = r() < plan.edge, move = (0.01 + r() * 0.12) * (win ? plan.mult * 0.5 : 1) * (win ? 1 : -1);
+    const exit = entry * (1 + move * side), hold = (r() < 0.4 ? r() * 0.2 : r() * 6) * DAY, tc = Math.min(t + hold, now - 36e5);
+    const liq = !win && plan.liq && r() < plan.liq / plan.n * 3;
+    const fee = (p) => (sz * p * 0.00045).toFixed(4);
+    fills.push({ coin: c[0], px: String(entry), sz: String(sz), side: side > 0 ? "B" : "A", time: Math.round(t), startPosition: "0", dir: side > 0 ? "Open Long" : "Open Short", closedPnl: "0", fee: fee(entry), feeToken: "USDC", builderFee: r() < 0.5 ? (sz * entry * 0.0005).toFixed(4) : undefined, tid: tid++ });
+    const closePx = liq ? entry * (1 - side * 0.09) : exit;
+    const f = { coin: c[0], px: String(closePx), sz: String(sz), side: side > 0 ? "A" : "B", time: Math.round(tc), startPosition: String(side * sz), dir: side > 0 ? "Close Long" : "Close Short", closedPnl: String((closePx - entry) * sz * side), fee: fee(closePx), feeToken: "USDC", tid: tid++ };
+    if (liq) f.liquidation = { liquidatedUser: DEMO_ADDR[kind], markPx: String(closePx), method: "market" };
+    fills.push(f);
+    if (r() < 0.5) funding.push({ time: Math.round(t + hold / 2), delta: { type: "funding", coin: c[0], usdc: String((r() - 0.45) * sz * entry * 0.0004 * (hold / DAY)) } });
+  }
+  fills.sort((a, b) => a.time - b.time);
+  let cum = 0; const pnlHist = [[t0, "0"]], avHist = [[t0, "10000"]];
+  const base = { god: 4000, party: 40000, cope: 400000, rekt: 150000 }[kind];
+  for (const f of fills) { cum += Number(f.closedPnl) - Number(f.fee); pnlHist.push([f.time, String(cum)]); avHist.push([f.time, String(base + cum)]); }
+  const portfolio = [["allTime", { pnlHistory: pnlHist, accountValueHistory: avHist, vlm: "0" }]];
+  const state = { assetPositions: kind === "rekt" ? [] : [
+    { position: { coin: "HYPE", szi: "420", entryPx: "31.2", unrealizedPnl: kind === "cope" ? "-512.4" : "1840.2", leverage: { value: 5 }, positionValue: "13000" } },
+    { position: { coin: "ETH", szi: "-2.5", entryPx: "3350", unrealizedPnl: kind === "cope" ? "-220.1" : "690.5", leverage: { value: 10 }, positionValue: "8000" } },
+  ] };
+  return async (body) => {
+    await new Promise((ok) => setTimeout(ok, 60));
+    if (body.type === "userFillsByTime") return fills.filter((f) => f.time >= body.startTime).slice(0, 2000);
+    if (body.type === "userFunding") return funding.filter((f) => f.time >= body.startTime).slice(0, 500);
+    if (body.type === "portfolio") return portfolio;
+    if (body.type === "clearinghouseState") return state;
+    if (body.type === "candleSnapshot") {
+      const c = coins.find((x) => x[0] === body.req.coin); const out = [];
+      for (let tt = body.req.startTime; tt <= body.req.endTime; tt += 4 * 36e5) { const p = priceAt(c, tt); out.push({ t: tt, o: p, c: p, h: p * 1.01, l: p * 0.99 }); }
+      return out;
+    }
+    return [];
+  };
+}
+const DEMO_ADDR = { god: "0x6a0de1d5e1a1c0ffee00000000000000000000aa", party: "0x9a77ee00000000000000000000000000beefc0de", cope: "0xc0be0000000000000000000000000000000d1d1d", rekt: "0xdead000000000000000000000000000000000bad" };
+document.querySelectorAll("[data-demo]").forEach((b) => b.addEventListener("click", () => { const k = b.dataset.demo; run(DEMO_ADDR[k], demoInfo(k), true); }));
+})();
+</script>
+</body>
+</html>
