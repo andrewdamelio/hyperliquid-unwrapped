@@ -73,6 +73,7 @@ src/
   ui/                    story viewer, share/save, animated background
   demo/demo.ts           deterministic demo accounts
   moods.ts               mood thresholds, colors, quips
+web/index.html           page shell (Vite entry)
 tests/                   unit tests for trade rebuilding and stats
 docs/                    production build (served by GitHub Pages)
 ```

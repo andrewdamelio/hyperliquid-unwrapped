@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hyper Unwrapped — your Hyperliquid trading, unwrapped</title>
+<meta name="description" content="Paste a Hyperliquid address, get shareable PnL cards: best trade, worst trade, cursed assets, biggest miss and more.">
+<meta name="theme-color" content="#07070a">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Grotesk:wght@500;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+<canvas id="fx"></canvas>
+<div class="wrap">
+  <header><div class="logo">HYPER<i>UNWRAPPED</i></div><div class="tag">not financial advice</div></header>
+
+  <section id="landing">
+    <h1>Your perps,<br><span>unwrapped</span>.<br><em>No refunds.</em></h1>
+    <p>Paste any Hyperliquid address. Get shareable cards: all-time PnL, best and worst trades, cursed assets, biggest miss, and what kind of degen you really are.</p>
+    <form class="inp" id="form">
+      <input id="addr" placeholder="0x… Hyperliquid address" autocomplete="off" spellcheck="false" inputmode="text">
+      <button class="go" id="goBtn">UNWRAP</button>
+    </form>
+    <div class="demos">
+      <button class="chip" data-demo="god">demo: generational 🚀</button>
+      <button class="chip" data-demo="party">demo: cooking 🎉</button>
+      <button class="chip" data-demo="cope">demo: coping 🫠</button>
+      <button class="chip" data-demo="rekt">demo: rekt 💀</button>
+    </div>
+    <div class="status" id="status"></div>
+    <div class="bar" id="bar"><i></i></div>
+    <p class="fine">Reads public data from Hyperliquid's Info API, right in your browser. Nothing is stored or sent anywhere else. Hyperliquid only serves an account's most recent 10,000 fills, so very active accounts are recapped from those. Independent fan tool, not affiliated with Hyperliquid.</p>
+  </section>
+
+  <section id="story">
+    <div class="prog" id="prog"></div>
+    <div class="stage" id="stage"><img id="cardImg" alt="unwrapped card"><div class="tap l" id="tapL"></div><div class="tap r" id="tapR"></div></div>
+    <div class="nav"><button id="prev">← prev</button><span class="tag" id="count"></span><button id="next">next →</button></div>
+    <div class="actions">
+      <button class="act primary" id="share">Share card</button>
+      <button class="act" id="save">Save card</button>
+      <button class="act" id="saveAll">Save all</button>
+      <button class="act" id="again">New address</button>
+    </div>
+    <div class="hint">Tip: long-press a card to save it to your photos.</div>
+  </section>
+</div>
+<div class="toast" id="toast"></div>
+
+<script type="module" src="../src/main.ts"></script>
+</body>
+</html>
