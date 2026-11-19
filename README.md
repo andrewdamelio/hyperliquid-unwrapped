@@ -2,7 +2,7 @@
 
 **Your Hyperliquid trading, unwrapped.** Paste any Hyperliquid address and get shareable PnL cards: best trade, worst trade, cursed assets, biggest miss and what kind of degen you really are.
 
-**Live:** https://andrewdamelio.github.io/hyperliquid-unwrapped/
+**Live:** https://venerable-clafoutis-1faf33.netlify.app
 
 <p>
   <img src="assets/demo/01-generational.jpg" width="32%" alt="Generational run PnL card">
