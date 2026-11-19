@@ -20,8 +20,6 @@
   <img src="assets/demo/09-receipts.jpg" width="32%" alt="Receipts stats card">
 </p>
 
-<sub>Cards above are from the built-in demo accounts (synthetic data).</sub>
-
 ## The cards
 
 | Card | What it shows |
