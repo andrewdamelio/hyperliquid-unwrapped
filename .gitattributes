@@ -1,0 +1,4 @@
+# Keep GitHub's language stats about the source, not the build.
+docs/** linguist-generated
+package-lock.json linguist-generated
+assets/** linguist-documentation
