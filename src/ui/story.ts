@@ -25,7 +25,7 @@ export function createStoryViewer(onClose: () => void) {
   let idx = 0;
   let user = "";
 
-  const fileName = (c: Card) => `hyper-unwrapped-${shortAddr(user).replace("…", "")}-${c.name}.png`;
+  const fileName = (c: Card) => `hyper-wrapped-${shortAddr(user).replace("…", "")}-${c.name}.png`;
 
   function show(i: number) {
     idx = clamp(i, 0, deck.length - 1);
@@ -78,7 +78,7 @@ export function createStoryViewer(onClose: () => void) {
   $("#share").onclick = async () => {
     try {
       const f = new File([await blobOf(deck[idx].cv)], fileName(deck[idx]), { type: "image/png" });
-      if (navigator.canShare?.({ files: [f] })) await navigator.share({ files: [f], text: "My Hyperliquid, unwrapped 👀" });
+      if (navigator.canShare?.({ files: [f] })) await navigator.share({ files: [f], text: "My Hyperliquid Wrapped 👀" });
       else {
         download(f, f.name);
         toast("Sharing not supported here, saved instead");

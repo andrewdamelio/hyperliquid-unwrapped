@@ -153,7 +153,7 @@ export function newCard(mood: Mood, intensity: number, seed: number, user: strin
   ctx.fillText("HYPER", PAD, 104);
   const w = ctx.measureText("HYPER").width;
   ctx.fillStyle = mood.acc;
-  ctx.fillText("UNWRAPPED", PAD + w + 6, 104);
+  ctx.fillText("WRAPPED", PAD + w + 6, 104);
 
   ctx.textAlign = "right";
   ctx.fillStyle = "rgba(255,255,255,.6)";

@@ -3,7 +3,7 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
-  "description": "Your Hyperliquid trading, unwrapped: shareable PnL cards for any address.",
+  "description": "Your Hyperliquid trading, wrapped: shareable PnL cards for any address.",
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",

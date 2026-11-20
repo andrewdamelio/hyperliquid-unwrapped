@@ -1,6 +1,6 @@
-# Hyper Unwrapped
+# Hyper Wrapped
 
-**Your Hyperliquid trading, unwrapped.** Paste any Hyperliquid address and get shareable PnL cards: best trade, worst trade, cursed assets, biggest miss and what kind of degen you really are.
+**Your Hyperliquid trading, wrapped.** Paste any Hyperliquid address and get shareable PnL cards: best trade, worst trade, cursed assets, biggest miss and what kind of degen you really are.
 
 **Live:** https://venerable-clafoutis-1faf33.netlify.app
 
