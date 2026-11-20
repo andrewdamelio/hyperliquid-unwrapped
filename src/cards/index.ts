@@ -7,6 +7,7 @@ import { archetypeCard } from "./archetype";
 import { bestTradeCard, worstTradeCard } from "./trade";
 import { bestAssetsCard, cursedAssetsCard } from "./assets";
 import { missCard } from "./miss";
+import { holdsCard } from "./holds";
 import { bagsCard } from "./bags";
 import { receiptsCard } from "./receipts";
 
@@ -16,6 +17,7 @@ const DECK: Array<(c: DeckContext) => Card | null> = [
   archetypeCard,
   bestTradeCard,
   worstTradeCard,
+  holdsCard,
   bestAssetsCard,
   cursedAssetsCard,
   missCard,

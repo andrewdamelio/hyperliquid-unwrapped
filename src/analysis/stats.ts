@@ -1,4 +1,4 @@
-import type { CoinStat, OpenPosition, RawAccount, Stats } from "../types";
+import type { CoinStat, OpenPosition, RawAccount, Stats, Trade } from "../types";
 import { archetypeFor } from "./archetypes";
 import { coinName, feeUsd, isLiquidationOf, reconstructTrades } from "./trades";
 
@@ -71,8 +71,10 @@ export function analyze(d: RawAccount): Stats {
     streak = t.pnl > 0 ? streak + 1 : 0;
     bestStreak = Math.max(bestStreak, streak);
   }
-  const holds = trades.map((t) => t.closeTime! - t.openTime).sort((a, b) => a - b);
+  const holdOf = (t: Trade) => t.closeTime! - t.openTime;
+  const holds = trades.map(holdOf).sort((a, b) => a - b);
   const medianHold = holds.length ? holds[Math.floor(holds.length / 2)] : 0;
+  const byHold = [...trades].sort((a, b) => holdOf(b) - holdOf(a));
 
   const coins = Object.values(byCoin);
   const favCoin = (Object.entries(coinVol).sort((a, b) => b[1] - a[1])[0] as [string, number] | undefined) ?? null;
@@ -114,6 +116,8 @@ export function analyze(d: RawAccount): Stats {
     positions,
     archetype: archetypeFor({ pnl, fees, fundingNet, liqCount, winRate, tradeCount: trades.length, medianHold, favCoin: favCoin?.[0] ?? null }),
     medianHold,
+    longestHold: byHold[0] ?? null,
+    shortestHold: byHold.length > 1 ? byHold[byHold.length - 1] : null,
     capped: d.capped,
     firstTime: d.fills.length ? d.fills[0].time : null,
     fillCount: d.fills.length,

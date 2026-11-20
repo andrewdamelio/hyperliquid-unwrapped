@@ -144,6 +144,9 @@ export interface Stats {
   positions: OpenPosition[];
   archetype: [title: string, blurb: string];
   medianHold: number;
+  /** closed trades with the longest and shortest hold */
+  longestHold: Trade | null;
+  shortestHold: Trade | null;
   capped: boolean;
   firstTime: number | null;
   fillCount: number;

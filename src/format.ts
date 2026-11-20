@@ -50,13 +50,14 @@ export function px(p: number | string | undefined): string {
 }
 
 export function dur(ms: number): string {
-  const m = ms / 6e4;
-  if (m < 1) return Math.max(1, Math.round(ms / 1000)) + "s";
-  if (m < 60) return Math.round(m) + "m";
-  const h = m / 60;
-  if (h < 48) return Math.floor(h) + "h " + Math.round(m % 60) + "m";
-  const d = h / 24;
-  return Math.floor(d) + "d " + Math.round(h % 24) + "h";
+  // Round once at the unit we display, then split, so we never print "24h" or "60m".
+  const secs = Math.round(ms / 1000);
+  if (secs < 60) return Math.max(1, secs) + "s";
+  const mins = Math.round(ms / 6e4);
+  if (mins < 60) return mins + "m";
+  if (mins < 48 * 60) return Math.floor(mins / 60) + "h " + (mins % 60) + "m";
+  const hrs = Math.round(ms / 36e5);
+  return Math.floor(hrs / 24) + "d " + (hrs % 24) + "h";
 }
 
 export const dateStr = (t: number) => new Date(t).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });

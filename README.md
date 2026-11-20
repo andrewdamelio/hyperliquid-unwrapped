@@ -7,17 +7,22 @@
 <p>
   <img src="assets/demo/01-generational.jpg" width="32%" alt="Generational run PnL card">
   <img src="assets/demo/02-fully-rekt.jpg" width="32%" alt="Fully rekt PnL card">
-  <img src="assets/demo/03-archetype.jpg" width="32%" alt="Trader archetype card">
+  <img src="assets/demo/03-party-time.jpg" width="32%" alt="Party time PnL card">
 </p>
 <p>
-  <img src="assets/demo/04-best-trade.jpg" width="32%" alt="Best trade card">
-  <img src="assets/demo/05-biggest-miss.jpg" width="32%" alt="Biggest miss card">
-  <img src="assets/demo/06-cursed-assets.jpg" width="32%" alt="Cursed assets card">
+  <img src="assets/demo/04-archetype.jpg" width="32%" alt="Trader archetype card">
+  <img src="assets/demo/05-best-trade.jpg" width="32%" alt="Best trade card">
+  <img src="assets/demo/06-worst-trade.jpg" width="32%" alt="Worst trade card">
 </p>
 <p>
-  <img src="assets/demo/07-party-time.jpg" width="32%" alt="Party time PnL card">
-  <img src="assets/demo/08-coping.jpg" width="32%" alt="It's just a dip PnL card">
-  <img src="assets/demo/09-receipts.jpg" width="32%" alt="Receipts stats card">
+  <img src="assets/demo/07-hold-times.jpg" width="32%" alt="Diamond vs paper hands card">
+  <img src="assets/demo/08-biggest-miss.jpg" width="32%" alt="Biggest miss card">
+  <img src="assets/demo/09-cursed-assets.jpg" width="32%" alt="Cursed assets card">
+</p>
+<p>
+  <img src="assets/demo/10-money-printers.jpg" width="32%" alt="Best assets card">
+  <img src="assets/demo/11-coping.jpg" width="32%" alt="It is just a dip PnL card">
+  <img src="assets/demo/12-receipts.jpg" width="32%" alt="Receipts stats card">
 </p>
 
 ## The cards
@@ -27,6 +32,7 @@
 | **All-time PnL** | Hyperliquid's own PnL history, return on deposits, PnL chart |
 | **Trader archetype** | Liquidation Speedrunner, Memecoin Mercenary, Fee Donor, Funding Farmer, Sniper, Paper/Diamond Hands… |
 | **Best / worst trade** | Market, side, entry → exit, hold time, liquidation stamp |
+| **Diamond vs paper hands** | Your longest and shortest holds, with the PnL on each |
 | **Money printers / cursed assets** | Top and bottom 3 coins by PnL, including fees and funding |
 | **Biggest miss** | How much more you'd have made holding 30 days past your exit |
 | **Current bags** | Open positions and unrealized PnL |

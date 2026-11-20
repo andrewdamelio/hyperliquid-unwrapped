@@ -4,7 +4,7 @@ import { analyze, portfolioSummary } from "../src/analysis/stats";
 import { archetypeFor } from "../src/analysis/archetypes";
 import { moodFor } from "../src/moods";
 import { findMiss } from "../src/analysis/miss";
-import { DAY } from "../src/format";
+import { DAY, dur } from "../src/format";
 
 const USER = "0xabc0000000000000000000000000000000000abc";
 const f = (coin: string, side: "B" | "A", sz: number, px: number, start: number, closedPnl: number, time: number, fee = 0): Fill => ({
@@ -59,6 +59,21 @@ describe("analyze", () => {
     expect(S.fees).toBe(2);
   });
 
+  it("finds the longest and shortest holds", () => {
+    const S = analyze(account(fills));
+    // BTC, ETH and SOL are each held 1 day; add a long one and a quick one
+    const S2 = analyze(account([...fills, f("HYPE", "B", 1, 20, 0, 0, 10 * DAY), f("HYPE", "A", 1, 25, 1, 5, 40 * DAY), f("WIF", "B", 1, 2, 0, 0, 50 * DAY), f("WIF", "A", 1, 2, 1, 0, 50 * DAY + 30_000)]));
+    expect(S.longestHold).not.toBeNull();
+    expect(S2.longestHold!.coin).toBe("HYPE");
+    expect(S2.shortestHold!.coin).toBe("WIF");
+  });
+
+  it("has no shortest hold with a single trade", () => {
+    const S = analyze(account(fills.slice(0, 2)));
+    expect(S.longestHold!.coin).toBe("BTC");
+    expect(S.shortestHold).toBeNull();
+  });
+
   it("clamps return on deposits at -100%", () => {
     const S = analyze(account(fills, { portfolio: [["allTime", { pnlHistory: [[1, "0"], [2, "-5000"]], accountValueHistory: [[1, "1000"], [2, "-4000"]] }]] }));
     expect(S.roi).toBe(-1);
@@ -91,4 +106,11 @@ describe("findMiss", () => {
     const S = analyze(account([f("BTC", "B", 1, 100, 0, 0, 0), f("BTC", "A", 1, 110, 1, 10, DAY)]));
     expect(await findMiss(S, async () => [{ t: DAY, h: "105", l: "90" }], 40 * DAY)).toBeNull();
   });
+});
+
+describe("dur", () => {
+  it.each([
+    [500, "1s"], [42_000, "42s"], [59_600, "1m"], [3_570_000, "1h 0m"], [5 * 36e5 + 59.6 * 6e4, "6h 0m"],
+    [5 * DAY + 23.6 * 36e5, "6d 0h"], [47 * DAY + 3 * 36e5, "47d 3h"],
+  ])("%s ms → %s", (ms, out) => expect(dur(ms)).toBe(out));
 });

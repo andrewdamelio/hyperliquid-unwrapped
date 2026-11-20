@@ -34,19 +34,23 @@ export function demoInfo(kind: DemoKind, now = Date.now()): InfoFn {
   const fills: Fill[] = [];
   const funding: FundingEntry[] = [];
   let tid = 1, t = t0;
+  // One position per coin at a time, like a real account (startPosition stays consistent).
+  const busyUntil: Record<string, number> = {};
 
   for (let i = 0; i < plan.n; i++) {
     t += (r() * 2.2 + 0.2) * DAY * (420 / plan.n) * 0.45;
     if (t > now - DAY) break;
     const c = COINS[Math.floor(Math.pow(r(), 1.4) * COINS.length)];
+    if ((busyUntil[c[0]] ?? 0) >= t) continue;
     const side = r() < 0.6 ? 1 : -1;
     const entry = priceAt(c, t);
     const sz = c[2] * (0.3 + r() * 2.2) * (r() < 0.05 ? 6 : 1) * plan.size;
     const win = r() < plan.edge;
     const move = (0.01 + r() * 0.12) * (win ? plan.mult * 0.5 : 1) * (win ? 1 : -1);
     const exit = entry * (1 + move * side);
-    const hold = (r() < 0.4 ? r() * 0.2 : r() * 6) * DAY;
+    const hold = Math.max((r() < 0.4 ? r() * 0.2 : r() * 6) * DAY, 60_000 * (1 + r() * 20));
     const tc = Math.min(t + hold, now - HOUR);
+    busyUntil[c[0]] = tc;
     const liq = !win && plan.liq > 0 && r() < (plan.liq / plan.n) * 3;
     const fee = (p: number) => (sz * p * 0.00045).toFixed(4);
 
